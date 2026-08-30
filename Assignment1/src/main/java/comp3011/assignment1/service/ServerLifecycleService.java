@@ -2,6 +2,7 @@ package comp3011.assignment1.service;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.springframework.stereotype.Service;
 
@@ -12,14 +13,19 @@ public class ServerLifecycleService {
 
     private final Instant serverStart;
 
+    private final AtomicBoolean shutdownRequested =
+            new AtomicBoolean(false);
+
     public ServerLifecycleService() {
         this.serverStart = Instant.now();
     }
 
     public UptimeResponse getUptime() {
+
         Instant now = Instant.now();
 
-        Duration uptime = Duration.between(serverStart, now);
+        Duration uptime =
+                Duration.between(serverStart, now);
 
         double uptimeSeconds =
                 uptime.getSeconds()
@@ -29,6 +35,14 @@ public class ServerLifecycleService {
                 serverStart,
                 now,
                 uptimeSeconds
+        );
+    }
+
+    public boolean requestShutdown() {
+
+        return shutdownRequested.compareAndSet(
+                false,
+                true
         );
     }
 }
