@@ -1,11 +1,15 @@
 package comp3011.assignment1.controller;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import comp3011.assignment1.dto.ShutdownResponse;
 import comp3011.assignment1.dto.UptimeResponse;
+import comp3011.assignment1.exception.ShutdownAlreadyInProgressException;
 import comp3011.assignment1.service.ServerLifecycleService;
 
 @RestController
@@ -14,17 +18,31 @@ public class AdminController {
 
     private final ServerLifecycleService serverLifecycleService;
 
-    public AdminController(
-            ServerLifecycleService serverLifecycleService) {
-
+    public AdminController(ServerLifecycleService serverLifecycleService) {
         this.serverLifecycleService = serverLifecycleService;
     }
 
     @GetMapping("/uptime")
     public ResponseEntity<UptimeResponse> getServerUptime() {
-
         return ResponseEntity.ok(
                 serverLifecycleService.getUptime()
         );
+    }
+
+    @PostMapping("/shutdown")
+    public ResponseEntity<ShutdownResponse> shutdownServer() {
+
+        boolean accepted =
+                serverLifecycleService.requestShutdown();
+
+        if (!accepted) {
+            throw new ShutdownAlreadyInProgressException();
+        }
+
+        return ResponseEntity
+                .status(HttpStatus.ACCEPTED)
+                .body(new ShutdownResponse(
+                        "Graceful shutdown requested."
+                ));
     }
 }
