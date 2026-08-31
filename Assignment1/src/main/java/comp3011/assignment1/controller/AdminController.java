@@ -38,6 +38,7 @@ public class AdminController {
         if (!accepted) {
             throw new ShutdownAlreadyInProgressException();
         }
+        serverLifecycleService.performShutdown();
 
         return ResponseEntity
                 .status(HttpStatus.ACCEPTED)
