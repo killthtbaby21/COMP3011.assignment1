@@ -9,15 +9,15 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import comp3011.assignment1.service.TranscriptionService;
+import comp3011.assignment1.service.OpenAITranscriptionService;
 
 @RestController
 @RequestMapping("/api/v1")
 public class TranscriptionController {
 
-    private final TranscriptionService transcriptionService;
+    private final OpenAITranscriptionService transcriptionService;
 
-    public TranscriptionController(TranscriptionService transcriptionService) {
+    public TranscriptionController(OpenAITranscriptionService transcriptionService) {
         this.transcriptionService = transcriptionService;
     }
 
