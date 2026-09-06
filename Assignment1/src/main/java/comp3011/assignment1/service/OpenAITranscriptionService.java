@@ -21,9 +21,14 @@ public class OpenAITranscriptionService implements TranscriptionService {
             "https://api.openai.com/v1/audio/transcriptions";
 
     private final RestClient restClient;
+    private final StatisticsService statisticsService;
 
-    public OpenAITranscriptionService(RestClient.Builder restClientBuilder) {
+    public OpenAITranscriptionService(
+            RestClient.Builder restClientBuilder,
+            StatisticsService statisticsService) {
+
         this.restClient = restClientBuilder.build();
+        this.statisticsService = statisticsService;
     }
     @Override
     public String transcribe(MultipartFile audio) throws IOException {
