@@ -78,6 +78,12 @@ public class OpenAITranscriptionService implements TranscriptionService {
                     "Cloud transcription service returned an empty response."
             );
         }
+        if (response.usage() != null) {
+            statisticsService.addTokenUsage(
+                    response.usage().input_tokens(),
+                    response.usage().output_tokens()
+            );
+        }
 
         return response.text();
     }
@@ -95,6 +101,15 @@ public class OpenAITranscriptionService implements TranscriptionService {
         return apiKey;
     }
 
-    private record TranscriptionResponse(String text) {
+    private record TranscriptionResponse(
+            String text,
+            Usage usage
+    ) {
+    }
+
+    private record Usage(
+            long input_tokens,
+            long output_tokens
+    ) {
     }
 }
