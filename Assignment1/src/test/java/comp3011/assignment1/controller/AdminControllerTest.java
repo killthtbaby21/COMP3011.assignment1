@@ -16,6 +16,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import comp3011.assignment1.dto.UptimeResponse;
 import comp3011.assignment1.service.ServerLifecycleService;
+import comp3011.assignment1.exception.GlobalExceptionHandler;
 
 import static org.mockito.Mockito.mock;
 
@@ -33,6 +34,7 @@ class AdminControllerTest {
 
         mockMvc = MockMvcBuilders
                 .standaloneSetup(controller)
+                .setControllerAdvice(new GlobalExceptionHandler())
                 .build();
     }
 
@@ -64,6 +66,7 @@ class AdminControllerTest {
                 .andExpect(jsonPath("$.serverUptimeSeconds")
                         .value(90.0));
     }
+    
     @Test
     void shutdownReturnsAcceptedWhenRequestIsAccepted() throws Exception {
 
@@ -76,6 +79,16 @@ class AdminControllerTest {
                         .value("Graceful shutdown requested."));
 
         verify(serverLifecycleService).performShutdown();
+    }
+    
+    @Test
+    void shutdownReturnsConflictWhenShutdownAlreadyInProgress() throws Exception {
+
+        when(serverLifecycleService.requestShutdown())
+                .thenReturn(false);
+
+        mockMvc.perform(post("/api/v1/admin/shutdown"))
+                .andExpect(status().isConflict());
     }
     
 }

@@ -43,6 +43,16 @@ public class GlobalExceptionHandler {
                 "Unable to process the uploaded audio file."
         );
     }
+    
+    @ExceptionHandler(ShutdownAlreadyInProgressException.class)
+    public ResponseEntity<Map<String, Object>> handleShutdownAlreadyInProgress(
+            ShutdownAlreadyInProgressException exception) {
+
+        return buildErrorResponse(
+                HttpStatus.CONFLICT,
+                exception.getMessage()
+        );
+    }
 
     private ResponseEntity<Map<String, Object>> buildErrorResponse(
             HttpStatus status,
