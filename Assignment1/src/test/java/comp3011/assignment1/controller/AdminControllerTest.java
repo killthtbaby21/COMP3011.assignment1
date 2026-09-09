@@ -88,7 +88,9 @@ class AdminControllerTest {
                 .thenReturn(false);
 
         mockMvc.perform(post("/api/v1/admin/shutdown"))
-                .andExpect(status().isConflict());
+                .andExpect(status().isConflict())
+        		.andExpect(jsonPath("$.path")
+        				.value("/api/v1/admin/shutdown"));
     }
     
 }
