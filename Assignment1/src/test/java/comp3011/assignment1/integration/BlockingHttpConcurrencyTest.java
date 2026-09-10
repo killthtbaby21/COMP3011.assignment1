@@ -23,6 +23,12 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("local")
+/*
+ * Initial test structure was developed with assistance from ChatGPT.
+ * The implementation was subsequently reviewed, tested and refined,
+ * including the use of real HTTP requests, retry handling and
+ * concurrent execution.
+ */
 class BlockingHttpConcurrencyTest {
 
     private static final int REQUEST_COUNT = 225;

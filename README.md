@@ -41,3 +41,50 @@ The application may receive multiple HTTP requests at the same time, so shared d
 A concurrency regression test is included to check this behaviour. The test uses 32 worker threads, with each worker performing 20,000 updates to the same `StatisticsService`. This produces 640,000 concurrent updates in total. The final input and output token counts must both be exactly 640,000.
 
 This test provides assurance that the shared token counters remain correct when they are accessed concurrently.
+
+
+
+## REST API
+
+The application provides the following REST endpoints:
+
+- `POST /api/v1/transcribe` - uploads an audio file and returns the transcription.
+- `GET /api/v1/admin/uptime` - returns the current server uptime.
+- `POST /api/v1/admin/shutdown` - starts graceful server shutdown.
+- `GET /api/v1/stats/global` - returns the global token usage statistics.
+- `POST /api/v1/stats/reset` - resets the global statistics.
+
+API errors are handled by a global exception handler and returned with an appropriate HTTP status and error information.
+
+
+## Blocking Requests and Concurrency
+
+Speech-to-text is a blocking operation because the server must wait for the transcription service to return a result.
+
+The application relies on Spring Boot's web server to process multiple HTTP requests concurrently. A local transcription service is provided for testing and simulates a blocking cloud request without requiring an external API call.
+
+An integration test sends 225 concurrent HTTP transcription requests to a running Spring Boot server. This test checks that multiple blocking requests can be processed concurrently and that all requests complete successfully.
+
+
+## Testing
+
+JUnit tests are included for the main backend functionality.
+
+The tests cover:
+
+- administration endpoints and duplicate shutdown handling;
+- statistics endpoints;
+- transcription controller behaviour;
+- thread-safe concurrent statistics updates;
+- concurrent blocking HTTP transcription requests.
+
+Tests can be run with:
+
+`.\mvnw.cmd clean test`
+
+
+## AI Usage
+
+Generative AI was used as a development support tool during this assignment. It was mainly used to help explain Spring Boot concepts, review code, suggest test cases, and assist with debugging errors encountered during development.
+
+The implementation was reviewed, modified and tested during development before being included in the final project.
