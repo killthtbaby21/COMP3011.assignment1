@@ -8,6 +8,8 @@ The application allows a user to record audio through the browser and sends the 
 
 The application also provides REST API endpoints for server uptime, global token usage statistics, and graceful server shutdown.
 
+
+
 ## System Design
 
 The application is separated into frontend, controller, service, and data transfer object (DTO) components.
@@ -27,3 +29,15 @@ The transcription service is separated behind the `TranscriptionService` interfa
 A simplified request flow is:
 
 Browser -> REST Controller -> TranscriptionService -> OpenAI API -> StatisticsService
+
+
+
+## Concurrency and Thread Safety
+
+The application may receive multiple HTTP requests at the same time, so shared data must be updated safely.
+
+`StatisticsService` uses `AtomicLong` for both input and output token counters. Atomic operations are used so that concurrent transcription requests can update the statistics without losing updates. This also avoids using a large synchronized block that could unnecessarily block other requests.
+
+A concurrency regression test is included to check this behaviour. The test uses 32 worker threads, with each worker performing 20,000 updates to the same `StatisticsService`. This produces 640,000 concurrent updates in total. The final input and output token counts must both be exactly 640,000.
+
+This test provides assurance that the shared token counters remain correct when they are accessed concurrently.
