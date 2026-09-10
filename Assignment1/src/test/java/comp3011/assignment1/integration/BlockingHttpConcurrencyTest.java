@@ -9,27 +9,27 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.boot.test.web.server.LocalServerPort;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
-@SpringBootTest
-@AutoConfigureMockMvc
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("local")
 class BlockingHttpConcurrencyTest {
 
     private static final int REQUEST_COUNT = 225;
-
-    @Autowired
-    private MockMvc mockMvc;
+    
+    @LocalServerPort
+    private int port;
+    private final HttpClient httpClient =
+            HttpClient.newHttpClient();
 
     @Test
     void handles225ConcurrentBlockingRequests() throws Exception {
@@ -45,30 +45,43 @@ class BlockingHttpConcurrencyTest {
         // Send 225 transcription requests concurrently.
         for (int i = 0; i < REQUEST_COUNT; i++) {
 
-            CompletableFuture<Integer> future =
-                    CompletableFuture.supplyAsync(() -> {
-                        try {
-                            MockMultipartFile audio =
-                                    new MockMultipartFile(
-                                            "audio",
-                                            "test.wav",
-                                            "audio/wav",
-                                            "fake audio data".getBytes()
-                                    );
+        	CompletableFuture<Integer> future =
+        	        CompletableFuture.supplyAsync(() -> {
+        	            try {
+        	                String boundary = "TestBoundary";
 
-                            return mockMvc.perform(
-                                            multipart("/api/v1/transcribe")
-                                                    .file(audio)
-                                    )
-                                    .andExpect(status().isOk())
-                                    .andReturn()
-                                    .getResponse()
-                                    .getStatus();
+        	                String body =
+        	                        "--" + boundary + "\r\n"
+        	                        + "Content-Disposition: form-data; name=\"audio\"; "
+        	                        + "filename=\"test.wav\"\r\n"
+        	                        + "Content-Type: audio/wav\r\n"
+        	                        + "\r\n"
+        	                        + "fake audio data\r\n"
+        	                        + "--" + boundary + "--\r\n";
 
-                        } catch (Exception e) {
-                            throw new RuntimeException(e);
-                        }
-                    }, executor);
+        	                HttpRequest request = HttpRequest.newBuilder()
+        	                        .uri(URI.create(
+        	                                "http://localhost:" + port
+        	                                        + "/api/v1/transcribe"))
+        	                        .header(
+        	                                "Content-Type",
+        	                                "multipart/form-data; boundary=" + boundary)
+        	                        .POST(HttpRequest.BodyPublishers.ofString(
+        	                                body,
+        	                                StandardCharsets.UTF_8))
+        	                        .build();
+
+        	                HttpResponse<String> response =
+        	                        httpClient.send(
+        	                                request,
+        	                                HttpResponse.BodyHandlers.ofString());
+
+        	                return response.statusCode();
+
+        	            } catch (Exception e) {
+        	                throw new RuntimeException(e);
+        	            }
+        	        }, executor);
 
             futures.add(future);
         }
