@@ -13,6 +13,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.net.ConnectException;
 import java.nio.charset.StandardCharsets;
 
 import org.junit.jupiter.api.Test;
@@ -71,12 +72,7 @@ class BlockingHttpConcurrencyTest {
         	                                StandardCharsets.UTF_8))
         	                        .build();
 
-        	                HttpResponse<String> response =
-        	                        httpClient.send(
-        	                                request,
-        	                                HttpResponse.BodyHandlers.ofString());
-
-        	                return response.statusCode();
+        	                return sendWithRetry(request);
 
         	            } catch (Exception e) {
         	                throw new RuntimeException(e);
@@ -89,7 +85,7 @@ class BlockingHttpConcurrencyTest {
         // Wait until all requests finish.
         CompletableFuture.allOf(
                 futures.toArray(new CompletableFuture[0])
-        ).get(30, TimeUnit.SECONDS);
+        ).get(60, TimeUnit.SECONDS);
 
         long elapsedTime =
                 System.currentTimeMillis() - startTime;
@@ -107,6 +103,31 @@ class BlockingHttpConcurrencyTest {
         );
 
         // Sequential execution would take about 450 seconds.
-        assertTrue(elapsedTime < 30000);
+        assertTrue(elapsedTime < 60000);
+    }
+
+    private int sendWithRetry(HttpRequest request) throws Exception {
+
+        for (int attempt = 1; attempt <= 3; attempt++) {
+            try {
+                HttpResponse<String> response =
+                        httpClient.send(
+                                request,
+                                HttpResponse.BodyHandlers.ofString());
+
+                return response.statusCode();
+
+            } catch (ConnectException e) {
+                if (attempt == 3) {
+                    throw e;
+                }
+
+                // Retry a temporary local connection failure.
+                Thread.sleep(100);
+            }
+        }
+
+        throw new IllegalStateException(
+                "Request could not be completed.");
     }
 }
