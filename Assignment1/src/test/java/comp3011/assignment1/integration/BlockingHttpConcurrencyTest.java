@@ -24,10 +24,9 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("local")
 /*
- * Initial test structure was developed with assistance from ChatGPT.
- * The implementation was subsequently reviewed, tested and refined,
- * including the use of real HTTP requests, retry handling and
- * concurrent execution.
+ * I used ChatGPT to help me build the first version of this test.
+ * I changed it later to send real HTTP requests and added the retry
+ * after I had connection errors when testing it.
  */
 class BlockingHttpConcurrencyTest {
 
@@ -108,7 +107,8 @@ class BlockingHttpConcurrencyTest {
                         + elapsedTime + " ms"
         );
 
-        // Sequential execution would take about 450 seconds.
+     // 225 requests would take about 450 seconds if they were handled one by one.
+     // The test should finish well below that when requests are handled concurrently.
         assertTrue(elapsedTime < 60000);
     }
 
@@ -128,7 +128,8 @@ class BlockingHttpConcurrencyTest {
                     throw e;
                 }
 
-                // Retry a temporary local connection failure.
+             // Some connections can fail temporarily when all 225 requests start together,
+             // so retry the connection a few times before failing the test.
                 Thread.sleep(100);
             }
         }

@@ -50,6 +50,8 @@ public class ServerLifecycleService {
         );
     }
 
+ // I used ChatGPT to help with the shutdown part because closing the
+ // application immediately could stop the HTTP response from being sent.
     public void performShutdown() {
         Thread shutdownThread = new Thread(() -> {
             try {

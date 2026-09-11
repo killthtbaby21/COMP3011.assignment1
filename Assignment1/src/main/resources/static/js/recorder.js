@@ -1,4 +1,3 @@
-console.log("recorder.js loaded");
 const recordButton = document.getElementById("recordButton");
 const stopButton = document.getElementById("stopButton");
 const statusText = document.getElementById("status");
@@ -23,22 +22,15 @@ async function startRecording() {
         });
 
 		mediaRecorder.addEventListener("dataavailable", event => {
-		    console.log("Audio data received:", event.data.size, "bytes");
-
 		    if (event.data.size > 0) {
 		        audioChunks.push(event.data);
 		    }
 		});
 
 		mediaRecorder.addEventListener("stop", async () => {
-		    console.log("Recorder stopped.");
-		    console.log("Audio chunks:", audioChunks.length);
-
 		    const audioBlob = new Blob(audioChunks, {
 		        type: "audio/webm"
 		    });
-
-		    console.log("Audio blob size:", audioBlob.size, "bytes");
 
 		    stream.getTracks().forEach(track => track.stop());
 
@@ -74,7 +66,6 @@ function stopRecording() {
 }
 
 async function uploadAudio(audioBlob) {
-	console.log("Uploading audio:", audioBlob.size, "bytes");
     const formData = new FormData();
 
     formData.append(

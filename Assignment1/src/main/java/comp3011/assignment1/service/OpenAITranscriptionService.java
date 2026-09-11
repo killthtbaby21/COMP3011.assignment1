@@ -1,7 +1,7 @@
 package comp3011.assignment1.service;
 
 import java.io.IOException;
-import org.springframework.web.client.RestClientResponseException;
+
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.MediaType;
@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.multipart.MultipartFile;
 
 @Service
@@ -16,7 +17,6 @@ import org.springframework.web.multipart.MultipartFile;
 public class OpenAITranscriptionService implements TranscriptionService {
 
     private static final String API_KEY_ENV = "OPENAI_API_KEY";
-
     private static final String TRANSCRIPTION_URL =
             "https://api.openai.com/v1/audio/transcriptions";
 
@@ -30,11 +30,19 @@ public class OpenAITranscriptionService implements TranscriptionService {
         this.restClient = restClientBuilder.build();
         this.statisticsService = statisticsService;
     }
+
     @Override
     public String transcribe(MultipartFile audio) throws IOException {
 
         String apiKey = getApiKey();
 
+        /*
+         /*
+         * I used ChatGPT to help me understand how to put the uploaded audio
+         * into the multipart request. I tested this part with the transcription
+         * endpoint after making the changes.
+         */
+        
         ByteArrayResource audioResource =
                 new ByteArrayResource(audio.getBytes()) {
                     @Override
@@ -44,9 +52,7 @@ public class OpenAITranscriptionService implements TranscriptionService {
                     }
                 };
 
-        MultiValueMap<String, Object> body =
-                new LinkedMultiValueMap<>();
-
+        MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
         body.add("file", audioResource);
         body.add("model", "gpt-4o-mini-transcribe");
 
@@ -62,27 +68,23 @@ public class OpenAITranscriptionService implements TranscriptionService {
                     .body(TranscriptionResponse.class);
 
         } catch (RestClientResponseException e) {
-
             System.err.println("OpenAI API request failed.");
             System.err.println("Status: " + e.getStatusCode());
             System.err.println("Response: " + e.getResponseBodyAsString());
 
             throw new IllegalStateException(
-                    "Cloud transcription service request failed.",
-                    e
-            );
+                    "Cloud transcription service request failed.", e);
         }
 
         if (response == null || response.text() == null) {
             throw new IllegalStateException(
-                    "Cloud transcription service returned an empty response."
-            );
+                    "Cloud transcription service returned an empty response.");
         }
+
         if (response.usage() != null) {
             statisticsService.addTokenUsage(
                     response.usage().input_tokens(),
-                    response.usage().output_tokens()
-            );
+                    response.usage().output_tokens());
         }
 
         return response.text();
@@ -94,8 +96,7 @@ public class OpenAITranscriptionService implements TranscriptionService {
 
         if (apiKey == null || apiKey.isBlank()) {
             throw new IllegalStateException(
-                    "OPENAI_API_KEY environment variable is not configured."
-            );
+                    "OPENAI_API_KEY environment variable is not configured.");
         }
 
         return apiKey;
@@ -103,13 +104,11 @@ public class OpenAITranscriptionService implements TranscriptionService {
 
     private record TranscriptionResponse(
             String text,
-            Usage usage
-    ) {
+            Usage usage) {
     }
 
     private record Usage(
             long input_tokens,
-            long output_tokens
-    ) {
+            long output_tokens) {
     }
 }
