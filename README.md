@@ -51,7 +51,7 @@ The application provides the following REST endpoints:
 - `POST /api/v1/transcribe` - uploads an audio file and returns the transcription.
 - `GET /api/v1/admin/uptime` - returns the current server uptime.
 - `POST /api/v1/admin/shutdown` - starts graceful server shutdown.
-- `GET /api/v1/stats/global` - returns the global token usage statistics.
+- `GET /api/v1/global/stats` - returns the global token usage statistics.
 - `POST /api/v1/stats/reset` - resets the global statistics.
 
 API errors are handled by a global exception handler and returned with an appropriate HTTP status and error information.
@@ -63,7 +63,7 @@ Speech-to-text is a blocking operation because the server must wait for the tran
 
 The application relies on Spring Boot's web server to process multiple HTTP requests concurrently. A local transcription service is provided for testing and simulates a blocking cloud request without requiring an external API call.
 
-An integration test sends 225 concurrent HTTP transcription requests to a running Spring Boot server. This test checks that multiple blocking requests can be processed concurrently and that all requests complete successfully.
+An integration test sends 225 concurrent HTTP transcription requests to a running Spring Boot server. The test verifies that all requests return successfully within the configured timeout, providing a regression check for concurrent handling of blocking transcription requests.
 
 
 ## Testing

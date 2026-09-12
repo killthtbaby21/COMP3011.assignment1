@@ -36,7 +36,6 @@ public class OpenAITranscriptionService implements TranscriptionService {
 
         String apiKey = getApiKey();
 
-        /*
          /*
          * I used ChatGPT to help me understand how to put the uploaded audio
          * into the multipart request. I tested this part with the transcription
